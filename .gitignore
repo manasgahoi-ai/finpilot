@@ -1,0 +1,12 @@
+# Backend
+finpilot-backend/target/
+*.class
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+
+# IDE
+.vscode/
+.idea/
+*.iml
