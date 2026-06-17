@@ -10,3 +10,10 @@ frontend/dist/
 .vscode/
 .idea/
 *.iml
+# Crash logs
+*.log
+hs_err_*.log
+replay_*.log
+
+# Context docs
+finpilot-backend/src/main/java/com/finpilot/finpilot_backend/*.pdf
