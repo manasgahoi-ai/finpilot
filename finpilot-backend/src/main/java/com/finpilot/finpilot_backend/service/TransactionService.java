@@ -84,12 +84,12 @@ public class TransactionService {
         List<Transaction> transactions = transactionRepository.findByUser(user);
 
         BigDecimal totalIncome = transactions.stream()
-                .filter(t -> t.getType() == TransactionType.INCOME)
+                .filter(t -> t.getType() == TransactionType.CREDIT)
                 .map(Transaction::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal totalExpense = transactions.stream()
-                .filter(t -> t.getType() == TransactionType.EXPENSE)
+                .filter(t -> t.getType() == TransactionType.DEBIT)
                 .map(Transaction::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 

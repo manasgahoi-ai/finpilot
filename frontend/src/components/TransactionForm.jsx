@@ -5,7 +5,7 @@ function TransactionForm({ onTransactionAdded }) {
     const [amount, setAmount] = useState("");
     const [category, setCategory] = useState("");
     const [description, setDescription] = useState("");
-    const [type, setType] = useState("EXPENSE");
+    const [type, setType] = useState("DEBIT");
     const [date, setDate] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
@@ -35,7 +35,7 @@ function TransactionForm({ onTransactionAdded }) {
             setAmount("");
             setCategory("");
             setDescription("");
-            setType("EXPENSE");
+            setType("DEBIT");
             setDate("");
         } catch (error) {
             setError(error.response?.data?.message || "Failed to add transaction.");
@@ -87,8 +87,8 @@ function TransactionForm({ onTransactionAdded }) {
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                         required
                     >
-                        <option value="EXPENSE">Expense</option>
-                        <option value="INCOME">Income</option>
+                        <option value="DEBIT">Debit</option>
+                        <option value="CREDIT">Credit</option>
                     </select>
                 </div>
 

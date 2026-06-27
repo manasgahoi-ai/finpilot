@@ -125,8 +125,8 @@ function TransactionList({ transactions, onTransactionUpdated, onTransactionDele
                 {t.date} — {t.description || 'No description'}
               </p>
             </div>
-            <p className={`font-bold ${t.type === 'INCOME' ? 'text-green-600' : 'text-red-600'}`}>
-              {t.type === 'INCOME' ? '+' : '-'}₹{formatCurrency(t.amount)}
+            <p className={`font-bold ${t.type === 'CREDIT' ? 'text-green-600' : 'text-red-600'}`}>
+              {t.type === 'CREDIT' ? '+' : '-'}₹{formatCurrency(t.amount)}
             </p>
           </div>
         ))}
@@ -226,8 +226,8 @@ function EditTransactionModal({ transaction, onClose, onSave }) {
               onChange={(e) => setType(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
             >
-              <option value="EXPENSE">Expense</option>
-              <option value="INCOME">Income</option>
+              <option value="DEBIT">Debit</option>
+              <option value="CREDIT">Credit</option>
             </select>
           </div>
 

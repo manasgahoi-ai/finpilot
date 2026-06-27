@@ -17,3 +17,12 @@ replay_*.log
 
 # Context docs
 finpilot-backend/src/main/java/com/finpilot/finpilot_backend/*.pdf
+
+api key
+ml-service\.env
+
+# Python
+ml-service/venv/
+ml-service/__pycache__/
+**/__pycache__/
+*.pyc
