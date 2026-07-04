@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import TransactionForm from '../components/TransactionForm'
+import Layout from '../components/Layout'
 
 function AddTransaction() {
   const navigate = useNavigate()
@@ -9,20 +10,16 @@ function AddTransaction() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        {/* Back Button */}
-        <button
-          onClick={() => navigate('/dashboard')}
-          className="mb-4 text-blue-600 hover:text-blue-700 font-semibold flex items-center"
-        >
-          ← Back to Dashboard
-        </button>
-
-        {/* Transaction Form */}
+    <Layout>
+      <div className="mx-auto flex max-w-3xl flex-col gap-6 animate-[fadeIn_200ms_ease-out]">
+        <div>
+          <p className="text-sm font-medium uppercase tracking-[0.25em] text-emerald-500">Add transaction</p>
+          <h1 className="text-3xl font-semibold text-slate-800">Capture a new money move</h1>
+          <p className="mt-2 text-sm text-slate-500">Log income or expense details in seconds and keep the flow moving.</p>
+        </div>
         <TransactionForm onTransactionAdded={handleTransactionAdded} />
       </div>
-    </div>
+    </Layout>
   )
 }
 

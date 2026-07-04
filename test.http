@@ -1,0 +1,44 @@
+### Login
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+    "email": "abc@gmail.com",
+    "password": "abcdefghi"
+}
+
+### Parse Statement
+POST http://localhost:8080/api/statement/parse-statement
+Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhYmNAZ21haWwuY29tIiwiaWF0IjoxNzgyOTE3Mzk4LCJleHAiOjE3ODMwMDM3OTh9.Eg-5eZgOkcyTBiNTRZG5vwtNQ4evVwX6mgyrlhhrsDshgIO7k3MzFox6LdoEwL0IPJpPPZfLtZpXvLKHZAcC9g
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="file"; filename="statement.pdf"
+Content-Type: application/pdf
+
+< C:\Users\Hp\Downloads\Mobile Devices\gpay_statement_20260301_20260531.pdf
+--boundary--
+
+### Confirm Statement
+POST http://localhost:8080/api/statement/statements/confirm
+Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhYmNAZ21haWwuY29tIiwiaWF0IjoxNzgyOTE3Mzk4LCJleHAiOjE3ODMwMDM3OTh9.Eg-5eZgOkcyTBiNTRZG5vwtNQ4evVwX6mgyrlhhrsDshgIO7k3MzFox6LdoEwL0IPJpPPZfLtZpXvLKHZAcC9g
+Content-Type: application/json
+
+{
+    "transactions": [
+        {
+            "date": "2026-03-01",
+            "description": "Paid to VRINDA ENTERPRISES",
+            "amount": 201,
+            "type": "DEBIT",
+            "category": "OTHER"
+            },
+        {
+            "date": "2026-03-05",
+            "description": "Paid to SAI BABA KIRANA AND GENERAL ST",
+            "amount": 900,
+            "type": "DEBIT",
+            "category": "OTHER"
+        }
+    ]
+}

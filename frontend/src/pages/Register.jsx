@@ -13,7 +13,7 @@ function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
-    if(password.length < 8) {
+    if (password.length < 8) {
       setError('Password must be at least 8 characters long.')
       return
     }
@@ -23,6 +23,7 @@ function Register() {
       const response = await api.post('/auth/register', { name, email, password })
       if (response.status === 201) {
         localStorage.setItem('token', response.data.token)
+        localStorage.setItem('userName', name || email)
         navigate('/dashboard')
       }
     } catch (err) {
@@ -33,17 +34,30 @@ function Register() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-lg p-8 w-full max-w-md">
-        {/* Heading */}
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">FinPilot</h1>
-        <p className="text-gray-600 mb-6">Create your account</p>
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Name Input */}
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4">
+      <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-500">
+            <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.8">
+              <path d="M4 7.5h16" />
+              <path d="M7 4h10" />
+              <path d="M6 11h12" />
+              <path d="M8 15h8" />
+              <path d="M10 19h4" />
+            </svg>
+          </div>
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+            <h1 className="text-2xl font-semibold text-slate-800">FinPilot</h1>
+            <p className="text-sm text-slate-500">Create your premium account</p>
+          </div>
+        </div>
+
+        <h2 className="mt-8 text-xl font-semibold text-slate-800">Create account</h2>
+        <p className="mt-1 text-sm text-slate-500">Start managing every money move with clarity.</p>
+
+        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+          <div>
+            <label htmlFor="name" className="mb-1 block text-sm font-medium text-slate-700">
               Full Name
             </label>
             <input
@@ -52,14 +66,13 @@ function Register() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Your Name"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-xl border border-slate-200 px-4 py-2.5 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-emerald-500"
               required
             />
           </div>
 
-          {/* Email Input */}
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="email" className="mb-1 block text-sm font-medium text-slate-700">
               Email
             </label>
             <input
@@ -68,14 +81,13 @@ function Register() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="your@email.com"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-xl border border-slate-200 px-4 py-2.5 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-emerald-500"
               required
             />
           </div>
 
-          {/* Password Input */}
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="password" className="mb-1 block text-sm font-medium text-slate-700">
               Password
             </label>
             <input
@@ -84,33 +96,30 @@ function Register() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-xl border border-slate-200 px-4 py-2.5 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-emerald-500"
               required
             />
           </div>
 
-          {/* Error Message */}
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
               {error}
             </div>
           )}
 
-          {/* Submit Button */}
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold py-2 rounded-lg transition duration-200"
+            className="w-full rounded-xl bg-emerald-500 px-4 py-2.5 font-semibold text-white transition-all duration-200 hover:bg-emerald-600 disabled:cursor-not-allowed disabled:bg-emerald-300"
           >
-            {loading ? 'Registering...' : 'Register'}
+            {loading ? 'Registering...' : 'Create account'}
           </button>
         </form>
 
-        {/* Login Link */}
-        <p className="text-center text-gray-600 text-sm mt-6">
+        <p className="mt-6 text-center text-sm text-slate-500">
           Already have an account?{' '}
-          <Link to="/login" className="text-blue-600 hover:text-blue-700 font-semibold">
-            Login here
+          <Link to="/login" className="font-semibold text-emerald-600 hover:text-emerald-700">
+            Log in
           </Link>
         </p>
       </div>

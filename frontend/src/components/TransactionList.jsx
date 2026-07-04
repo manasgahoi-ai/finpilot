@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import api from '../api/axios'
-import { formatCurrency } from '../utils/format'
+import { formatCurrency, categoryOptions, formatCategory, formatCategoryLabel } from '../utils/format'
 
 function TransactionList({ transactions, onTransactionUpdated, onTransactionDeleted }) {
   const [contextMenu, setContextMenu] = useState({ show: false, x: 0, y: 0, transaction: null })
@@ -8,7 +8,6 @@ function TransactionList({ transactions, onTransactionUpdated, onTransactionDele
   const longPressTimerRef = useRef(null)
   const menuRef = useRef(null)
 
-  // Close context menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
@@ -23,7 +22,6 @@ function TransactionList({ transactions, onTransactionUpdated, onTransactionDele
     }
   }, [])
 
-  // Cleanup timer on unmount
   useEffect(() => {
     return () => {
       if (longPressTimerRef.current) {
@@ -32,49 +30,47 @@ function TransactionList({ transactions, onTransactionUpdated, onTransactionDele
     }
   }, [])
 
-  // Calculate clamped position to keep menu on screen
-  const getClampedPosition = (x, y) => {
-    const menuWidth = 160
-    const menuHeight = 80
+  const getClampedPosition = (x, y, menuWidth = 160, menuHeight = 80) => {
     const padding = 8
 
     let clampedX = x
     let clampedY = y
 
     if (x + menuWidth > window.innerWidth - padding) {
-      clampedX = window.innerWidth - menuWidth - padding
+      clampedX = Math.max(padding, window.innerWidth - menuWidth - padding)
     }
     if (y + menuHeight > window.innerHeight - padding) {
-      clampedY = window.innerHeight - menuHeight - padding
+      clampedY = Math.max(padding, window.innerHeight - menuHeight - padding)
     }
 
     return { x: clampedX, y: clampedY }
   }
 
-  // Right-click handler (desktop)
+  // After the menu mounts, measure its actual rendered size and re-clamp
+  // the position so it never overflows the viewport, regardless of content.
+  useLayoutEffect(() => {
+    if (!contextMenu.show || !menuRef.current) return
+
+    const rect = menuRef.current.getBoundingClientRect()
+    const { x, y } = getClampedPosition(contextMenu.x, contextMenu.y, rect.width, rect.height)
+
+    if (x !== contextMenu.x || y !== contextMenu.y) {
+      setContextMenu((prev) => ({ ...prev, x, y }))
+    }
+  }, [contextMenu.show, contextMenu.x, contextMenu.y])
+
   const handleContextMenu = (e, transaction) => {
     e.preventDefault()
     const pos = getClampedPosition(e.clientX, e.clientY)
-    setContextMenu({
-      show: true,
-      x: pos.x,
-      y: pos.y,
-      transaction
-    })
+    setContextMenu({ show: true, x: pos.x, y: pos.y, transaction })
   }
 
-  // Touch handlers (mobile)
   const handleTouchStart = (e, transaction) => {
     longPressTimerRef.current = setTimeout(() => {
       const touch = e.touches[0]
       const pos = getClampedPosition(touch.clientX, touch.clientY)
-      setContextMenu({
-        show: true,
-        x: pos.x,
-        y: pos.y,
-        transaction
-      })
-    }, 500) // 500ms long press
+      setContextMenu({ show: true, x: pos.x, y: pos.y, transaction })
+    }, 500)
   }
 
   const handleTouchEnd = () => {
@@ -84,7 +80,6 @@ function TransactionList({ transactions, onTransactionUpdated, onTransactionDele
     }
   }
 
-  // Action handlers
   const handleUpdate = () => {
     setEditingTransaction(contextMenu.transaction)
     setContextMenu({ show: false, x: 0, y: 0, transaction: null })
@@ -104,60 +99,68 @@ function TransactionList({ transactions, onTransactionUpdated, onTransactionDele
   }
 
   if (transactions.length === 0) {
-    return <p className="text-gray-500">No transactions yet.</p>
+    return (
+      <div className="rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+        <p className="text-lg font-semibold text-slate-800">No transactions yet</p>
+        <p className="mt-2 text-sm text-slate-500">Your latest cash flow will appear here as soon as you record it.</p>
+      </div>
+    )
   }
 
   return (
-    <div className="bg-white rounded-lg shadow p-4">
-      <h2 className="text-xl font-bold text-gray-800 mb-4">Transactions</h2>
-      <div className="space-y-2">
+    <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="mb-4 flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-semibold text-slate-800">Recent activity</h2>
+          <p className="text-sm text-slate-500">Long-press or right-click to edit or delete.</p>
+        </div>
+        <span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-600">
+          {transactions.length} entries
+        </span>
+      </div>
+
+      <div className="space-y-3">
         {transactions.map((t) => (
           <div
             key={t.id}
             onContextMenu={(e) => handleContextMenu(e, t)}
             onTouchStart={(e) => handleTouchStart(e, t)}
             onTouchEnd={handleTouchEnd}
-            className="flex justify-between items-center border-b py-3 px-2 hover:bg-gray-50 cursor-pointer select-none"
+            className="flex flex-col gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm sm:flex-row sm:items-center sm:justify-between"
           >
             <div>
-              <p className="font-medium text-gray-800">{t.category}</p>
-              <p className="text-sm text-gray-500">
-                {t.date} — {t.description || 'No description'}
+              <p className="font-medium text-slate-800">{t.category}</p>
+              <p className="mt-1 text-sm text-slate-500">
+                {t.date} • {t.description || 'No description'}
               </p>
             </div>
-            <p className={`font-bold ${t.type === 'CREDIT' ? 'text-green-600' : 'text-red-600'}`}>
-              {t.type === 'CREDIT' ? '+' : '-'}₹{formatCurrency(t.amount)}
-            </p>
+            <div className="flex items-center gap-3">
+              <span className="rounded-full bg-white px-3 py-1 text-sm font-medium text-slate-600">
+                {t.type === 'CREDIT' ? 'Credit' : 'Debit'}
+              </span>
+              <p className={`font-mono text-lg font-semibold ${t.type === 'CREDIT' ? 'text-emerald-500' : 'text-red-500'}`}>
+                {t.type === 'CREDIT' ? '+' : '-'}₹{formatCurrency(t.amount)}
+              </p>
+            </div>
           </div>
         ))}
       </div>
 
-      {/* Context Menu */}
       {contextMenu.show && (
         <div
           ref={menuRef}
-          className="fixed bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50 min-w-[160px]"
-          style={{
-            top: `${contextMenu.y}px`,
-            left: `${contextMenu.x}px`
-          }}
+          className="fixed z-50 min-w-[160px] rounded-2xl border border-slate-200 bg-white py-1 shadow-lg"
+          style={{ top: `${contextMenu.y}px`, left: `${contextMenu.x}px` }}
         >
-          <button
-            onClick={handleUpdate}
-            className="w-full text-left px-4 py-2 hover:bg-blue-50 text-gray-700 flex items-center gap-2"
-          >
+          <button onClick={handleUpdate} className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50">
             <span>✏️</span> Update
           </button>
-          <button
-            onClick={handleDelete}
-            className="w-full text-left px-4 py-2 hover:bg-red-50 text-red-600 flex items-center gap-2"
-          >
+          <button onClick={handleDelete} className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50">
             <span>🗑️</span> Delete
           </button>
         </div>
       )}
 
-      {/* Edit Modal */}
       {editingTransaction && (
         <EditTransactionModal
           transaction={editingTransaction}
@@ -178,10 +181,9 @@ function TransactionList({ transactions, onTransactionUpdated, onTransactionDele
   )
 }
 
-// Edit Modal Component
 function EditTransactionModal({ transaction, onClose, onSave }) {
   const [amount, setAmount] = useState(transaction.amount)
-  const [category, setCategory] = useState(transaction.category)
+  const [category, setCategory] = useState(formatCategory(transaction.category))
   const [description, setDescription] = useState(transaction.description || '')
   const [type, setType] = useState(transaction.type)
   const [date, setDate] = useState(transaction.date)
@@ -195,7 +197,7 @@ function EditTransactionModal({ transaction, onClose, onSave }) {
     }
     onSave({
       amount: parseFloat(amount),
-      category,
+      category: formatCategory(category),
       description,
       type,
       date
@@ -203,28 +205,28 @@ function EditTransactionModal({ transaction, onClose, onSave }) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">Update Transaction</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
+      <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-xl">
+        <h2 className="text-2xl font-semibold text-slate-800">Update transaction</h2>
+        <form onSubmit={handleSubmit} className="mt-4 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Amount</label>
+            <label className="mb-1 block text-sm font-medium text-slate-700">Amount</label>
             <input
               type="number"
               step="0.01"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-xl border border-slate-200 px-4 py-2.5 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-emerald-500"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+            <label className="mb-1 block text-sm font-medium text-slate-700">Type</label>
             <select
               value={type}
               onChange={(e) => setType(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-emerald-500"
             >
               <option value="DEBIT">Debit</option>
               <option value="CREDIT">Credit</option>
@@ -232,51 +234,47 @@ function EditTransactionModal({ transaction, onClose, onSave }) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-            <input
-              type="text"
+            <label className="mb-1 block text-sm font-medium text-slate-700">Category</label>
+            <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-emerald-500"
               required
-            />
+            >
+              {categoryOptions.map((option) => (
+                <option key={option} value={option}>{formatCategoryLabel(option)}</option>
+              ))}
+            </select>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+            <label className="mb-1 block text-sm font-medium text-slate-700">Date</label>
             <input
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
               max={new Date().toISOString().split('T')[0]}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-xl border border-slate-200 px-4 py-2.5 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-emerald-500"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <label className="mb-1 block text-sm font-medium text-slate-700">Description</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              className="min-h-[100px] w-full resize-none rounded-xl border border-slate-200 px-4 py-2.5 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-emerald-500"
               rows="3"
             />
           </div>
 
           <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 rounded-lg transition duration-200"
-            >
+            <button type="button" onClick={onClose} className="flex-1 rounded-xl bg-slate-100 px-4 py-2.5 font-semibold text-slate-700 transition hover:bg-slate-200">
               Cancel
             </button>
-            <button
-              type="submit"
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition duration-200"
-            >
-              Save Changes
+            <button type="submit" className="flex-1 rounded-xl bg-emerald-500 px-4 py-2.5 font-semibold text-white transition hover:bg-emerald-600">
+              Save changes
             </button>
           </div>
         </form>

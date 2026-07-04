@@ -8,7 +8,7 @@ from google.genai import types
 import asyncio
 
 load_dotenv()
-client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY_3"))
+client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 
 PROMPT_TEMPLATE = """
 Extract transactions from this bank statement. Return ONLY a valid JSON array.
@@ -82,53 +82,9 @@ def validate_transaction(t: dict) ->tuple[bool, dict]:
         return False, error
     return True, t
 
-
-'''async def call_llm_async(prompt: str) -> list:
-    loop = asyncio.get_running_loop()
-    response = await loop.run_in_executor(
-        None,
-        lambda: client.models.generate_content(
-            model='gemini-2.5-flash',
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json"
-            )
-        )
-    )
-    content = response.text
-    try:
-        start = content.find("[")
-        end = content.rfind("]") + 1
-        return json.loads(content[start:end])
-    except (json.JSONDecodeError, ValueError) as e:
-        print(f"LLM returned invalid JSON: {e}\nContent: {content}")
-        return []
-
-
-async def call_llm_single_async(prompt: str) -> dict:
-    loop = asyncio.get_running_loop()
-    response = await loop.run_in_executor(
-        None,
-        lambda: client.models.generate_content(
-            model='gemini-2.5-flash',
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json"
-            )
-        )
-    )
-    content = response.text
-    try:
-        start = content.find("{")
-        end = content.rfind("}") + 1
-        return json.loads(content[start:end])
-    except (json.JSONDecodeError, ValueError) as e:
-        print(f"Retry LLM returned invalid JSON: {e}")
-        return {}'''
-
 async def call_llm_async(prompt: str) -> list:
     response = await client.aio.models.generate_content(
-    model='gemini-2.5-flash',
+    model="gemini-3.1-flash-lite",
     contents=prompt,
     config=types.GenerateContentConfig(
         response_mime_type="application/json"
@@ -146,7 +102,7 @@ async def call_llm_async(prompt: str) -> list:
 
 async def call_llm_single_async(prompt: str) -> dict:
     response = await client.aio.models.generate_content(
-    model='gemini-2.5-flash',
+    model="gemini-3.1-flash-lite",
     contents=prompt,
     config=types.GenerateContentConfig(
         response_mime_type="application/json"
@@ -161,7 +117,7 @@ async def call_llm_single_async(prompt: str) -> dict:
         print(f"Retry LLM returned invalid JSON: {e}")
         return {}
 
-def chunk_rows(rows: list[str], max_rows: int = 50) -> list[list[str]]:
+def chunk_rows(rows: list[str], max_rows: int = 60) -> list[list[str]]:
     chunks = []
     for i in range(0, len(rows), max_rows):
         chunks.append(rows[i:i + max_rows])

@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { dispatchAuthLogout } from './authEvents'
 
 const api = axios.create({
   baseURL: 'http://localhost:8080/api',
@@ -17,12 +18,12 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-      // Token expired or invalid - clear and redirect to login
+      // Token expired or invalid - clear and notify the React tree to redirect.
+      // We dispatch a CustomEvent instead of using window.location.href so the
+      // navigation goes through React Router (no full page reload, in-memory
+      // state is preserved).
       localStorage.removeItem('token')
-      // Avoid redirect loop if we're already on the login page
-      if (!window.location.pathname.startsWith('/login')) {
-        window.location.href = '/login'
-      }
+      dispatchAuthLogout()
     }
     return Promise.reject(error)
   }
